@@ -1,0 +1,67 @@
+worker_processes auto;
+
+pcre_jit on;
+
+events {
+    worker_connections 1024;
+}
+
+http {
+    include       mime.types;
+    default_type  application/octet-stream;
+
+    merge_slashes off;
+    resolver 8.8.8.8 1.1.1.1 valid=300s;
+    lua_ssl_trusted_certificate /etc/ssl/certs/ca-certificates.crt;
+    lua_ssl_verify_depth 3;
+
+    map $request_uri $raw_url {
+        ~^/${PREFIX}/(https?:/[^/].+)$   $1;
+        default                        "";
+    }
+
+    limit_req_zone $binary_remote_addr zone=req:10m rate=5r/s;
+
+    server {
+        listen 80;
+        server_name ${SERVER_NAME};
+
+        set $final_url "";
+
+        location /${PREFIX}/ {
+            if ($request_method = OPTIONS) {
+                add_header Access-Control-Allow-Origin  *;
+                add_header Access-Control-Allow-Methods 'GET,HEAD,OPTIONS';
+                add_header Access-Control-Max-Age      1728000;
+                return 204;
+            }
+            limit_req zone=req burst=100 nodelay;
+            content_by_lua_file /etc/nginx/lua/resolve_redirect.lua;
+        }
+
+        location @relay {
+            proxy_http_version 1.1;
+            proxy_set_header Connection "";
+
+            proxy_set_header  Range     $http_range;
+            proxy_set_header  If-Range  $http_if_range;
+
+            proxy_buffering   on;
+            proxy_buffers     32 256k;
+            proxy_busy_buffers_size 512k;
+            proxy_max_temp_file_size 0;
+
+            proxy_pass $final_url;
+            proxy_set_header Host              $proxy_host;
+            proxy_set_header X-Real-IP         $remote_addr;
+            proxy_set_header X-Forwarded-For   $proxy_add_x_forwarded_for;
+            proxy_set_header X-Forwarded-Proto $scheme;
+
+            sendfile on;
+        }
+
+        header_filter_by_lua_block {
+            ngx.header["Access-Control-Allow-Origin"] = "*"
+        }
+    }
+}
