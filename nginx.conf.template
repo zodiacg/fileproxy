@@ -16,7 +16,7 @@ http {
     lua_ssl_verify_depth 3;
 
     map $request_uri $raw_url {
-        ~^/${PREFIX}/(https?:/[^/].+)$   $1;
+        "~^/${PREFIX}/(https?:/{1,2}[^/].+)$"   $1;
         default                        "";
     }
 

@@ -4,7 +4,7 @@ local http = require "resty.http"
 local MAX_REDIRECTS = 5
 
 local function fix_scheme(u)
-    return (u:gsub("^(https?):/([^/])", "%1://%2", 1))
+    return (u:gsub("^(https?):/+", "%1://", 1))
 end
 
 local function resolve(loc, base)
