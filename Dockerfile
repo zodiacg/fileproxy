@@ -11,7 +11,5 @@ COPY lua/resolve_redirect.lua  /etc/nginx/lua/resolve_redirect.lua
 COPY entrypoint.sh      /usr/local/bin/entrypoint.sh
 RUN chmod +x /usr/local/bin/entrypoint.sh
 
-ENV SERVER_NAME PREFIX
-
 ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]
 CMD ["/usr/local/openresty/bin/openresty", "-g", "daemon off;"]
