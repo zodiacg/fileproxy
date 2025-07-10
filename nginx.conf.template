@@ -11,7 +11,7 @@ http {
     default_type  application/octet-stream;
 
     merge_slashes off;
-    resolver 8.8.8.8 1.1.1.1 valid=300s;
+    resolver 8.8.8.8 1.1.1.1 valid=300s ipv6=off;
     lua_ssl_trusted_certificate /etc/ssl/certs/ca-certificates.crt;
     lua_ssl_verify_depth 3;
 
@@ -50,6 +50,7 @@ http {
             proxy_buffers     32 256k;
             proxy_busy_buffers_size 512k;
             proxy_max_temp_file_size 0;
+            proxy_ssl_server_name on;
 
             proxy_pass $final_url;
             proxy_set_header Host              $proxy_host;
